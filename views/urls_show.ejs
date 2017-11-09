@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%- include partials/_header %>
   <title>TinyApp</title>
 </head>
+<%- include partials/_header %>
 <body>
       <%= longURL %> : <%= shortURL %>
         <form action="/urls/<%= shortURL%>" method="POST" style="margin:150px;">

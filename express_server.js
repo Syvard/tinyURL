@@ -4,6 +4,8 @@ var PORT = process.env.PORT || 8080; // default port 8080
 app.set('view engine','ejs');
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
+var cookieParser = require('cookie-parser')
+app.use(cookieParser())
 
 var urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -34,11 +36,13 @@ app.listen(PORT, () => {
 });
 //Will display the port you're node is listening on (running on) - looks for the PORT variable listed at the top (8080 is the magic server port);
 app.get("/urls", (req, res) => {
-  let templateVars = { urls: urlDatabase };
+  let templateVars = { urls: urlDatabase,
+                    username: req.cookies["username"] };
   res.render("urls_index", templateVars);
 });
+
 app.get("/urls/new", (req, res) => {
-  res.render("urls_new");
+  res.render("urls_new", {username: req.cookies["username"] });
 });
 
 app.post("/urls", (req, res) => {
@@ -57,9 +61,11 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   let templateVars = { shortURL: req.params.id,
-                       longURL: urlDatabase[req.params.id] };
+                       longURL: urlDatabase[req.params.id],
+                       username: req.cookies["username"] };
   res.render("urls_show", templateVars);
 });
+
 //Moves the url info from urlDatabase to our 'urls_show' file, giving it the value listed in the 'let templateVars' (shortURL);
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
@@ -72,6 +78,17 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls");
 });
 //renames the longURL to what was placed in the
+
+app.post("/login", (req, res) => {
+  res.cookie( "username", req.body.username);
+  res.redirect("/urls");
+});
+
+app.post("/logout", (req, res) =>{
+  res.clearCookie('username',{})
+  res.redirect("/urls");
+});
+
 function generateRandomString() {
 var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";

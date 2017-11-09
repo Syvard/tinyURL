@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <%- include partials/_header %>
+
   <title>TinyApp</title>
 </head>
+
+<%- include partials/_header %>
 <body>
     <ul><% for (url in urls){ %>
       <li>
@@ -12,7 +14,12 @@
            <a href="/urls/<%= url %>">Edit</a>
           <button> Delete </button>
         </form>
-      </li>
+
+
+
+       </li>
+
+
     <% } %>
   </ul>
 </body>
