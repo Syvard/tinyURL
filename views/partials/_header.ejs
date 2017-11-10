@@ -1,17 +1,11 @@
-  <head>
-    <% if(username !== undefined) {%>
-    <%= username %>
+<header>
+  <% if (user !== undefined) { %>
+    <%= user.email %>
     <form action="/logout" method="POST">
       <input type="Submit" value="Logout">
     </form>
-
-    <% } else{%>
-
-      <form action="/login" method="POST" style="margin:150px;">
-          <input id="username" type="text" name="username" placeholder="Username" style="width: 300px" required>
-          <input type="submit" value="Submit">
-        </form>
-
-  <%} %>
-
-  </head>
+  <% } else{ %>
+    <a href="/login">Login</a>
+    <a href="/register">Register</a>
+  <% } %>
+</header>

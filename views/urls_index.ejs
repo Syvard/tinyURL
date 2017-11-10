@@ -1,26 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-
-  <title>TinyApp</title>
-</head>
-
-<%- include partials/_header %>
-<body>
+  <head>
+    <title>TinyApp</title>
+  </head>
+  <%- include partials/_header %>
+  <body>
     <ul><% for (url in urls){ %>
       <li>
         <%= url %> : <%= urls[url]%>
         <form method="POST" action="/urls/<%= url%>/delete">
-           <a href="/urls/<%= url %>">Edit</a>
+          <a href="/urls/<%= url %>">Edit</a>
           <button> Delete </button>
         </form>
-
-
-
-       </li>
-
-
-    <% } %>
-  </ul>
-</body>
+      </li>
+      <% } %>
+    </ul>
+  </body>
 </html>
