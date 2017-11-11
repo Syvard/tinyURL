@@ -6,11 +6,20 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 var cookieParser = require('cookie-parser')
 app.use(cookieParser())
+const bcrypt = require('bcrypt');
+const password = "purple-monkey-dinosaur"; // you will probably this from req.params
+const hashedPassword = bcrypt.hashSync(password, 10);
 
 //URL Database - Where you'll store urls for the website
 var urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "s33kkd"
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "ksdk54"
+  }
 };
 
 //User Database - Where users who register will be stored
@@ -18,13 +27,53 @@ const users = {
   "s33kkd": {
     id: "s33kkd",
     email: "dork@example.com",
-    password: "i-am-not-a-dork"
+    password: "i-am-not-a-dork",
   },
- "ksdk54": {
+  "ksdk54": {
     id: "ksdk54",
     email: "chris@example.com",
     password: "also-not-a-dork"
   }
+}
+
+function generateRandomString() {
+  var text = "";
+  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (var i = 0; i < 6; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
+}
+
+function IDChecker(username) {
+  var ID = '';
+  for (let user in users){
+    if (users[user].email === username) {
+      ID = user;
+      return ID;
+    }
+  }
+  return ID;
+}
+
+//checks the email being used in the register page and compares it to the other emails in the database
+function emailChecker(email) {
+  console.log("I am in the function" )
+  for (user in users) {
+    if (users[user].email === email) {
+      return true;
+    }
+  }
+}
+
+function urlsForUser(userId) {
+  const output = {}
+  for(const url in urlDatabase) {
+    if(userId === urlDatabase[url].userID) {
+      output[url] = urlDatabase[url];
+    }
+  }
+  return output;
 }
 
 /* ROUTES */
@@ -55,12 +104,11 @@ app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-//Will display the port you're node is listening on (running on) - looks for the PORT variable listed at the top (8080 is the magic server port);
 app.get("/urls", (req, res) => {
   var userID = req.cookies.user_id;
   var user = users[userID];
   let templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(userID),
     user: user
   };
   res.render("urls_index", templateVars);
@@ -87,19 +135,28 @@ app.get("/register", (req, res) =>{
 });
 
 app.get("/u/:shortURL", (req, res) => {
+    if (!(req.params.shortURL in urlDatabase)){
+    res.send(404);
+    return;
+  }
   var short = req.params.shortURL ;
-  let longURL = urlDatabase[short];
+  let longURL = urlDatabase[short].longURL;
   res.redirect(longURL);
+
 });
 
 app.get("/urls/:id", (req, res) => {
   var userID = req.cookies.user_id;
+  if(userID !== urlDatabase[req.params.id].userID){
+    res.send(403);
+    return;
+  }
   var user = users[userID];
   let templateVars = {
     urls: urlDatabase,
     user: user,
     shortURL: req.params.id,
-    longURL: urlDatabase[req.params.id],};
+    longURL: urlDatabase[req.params.id].longURL,};
   res.render("urls_show", templateVars);
 });
 
@@ -150,15 +207,19 @@ app.post("/urls", (req, res) => {
   console.log(req.body);  // debug statement to see POST parameters
   var key = generateRandomString();
   var value = req.body.longURL;
-  urlDatabase[key] = value;
-  res.redirect('/urls/');         // Respond with 'Ok' (we will replace this)
+  urlDatabase[key] = {
+    longURL: value,
+    shortURL: key,
+    userID: req.cookies.user_id,
+  };
+  res.redirect('/urls');         // Respond with 'Ok' (we will replace this)
 });
 //Moves the url information from urlDatabase to our 'urls_index' file , giving it the value listed in 'let templateVars' (urls);
 
 app.post("/register", (req, res) => {
   let userId = generateRandomString();
   let myEmail = req.body.email;
-  let myPassword = req.body.password;
+  let myPassword = bcrypt.hashSync(req.body.password, 10);
   let user = {
     id: userId,
     email: myEmail,
@@ -175,34 +236,3 @@ app.post("/register", (req, res) => {
     res.redirect('/urls')
   };
 });
-
-//creates a random string to be used as a short url
-function generateRandomString() {
-  var text = "";
-  var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (var i = 0; i < 6; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
-}
-
-function IDChecker(username) {
-  var ID = '';
-  for (let user in users){
-    if (users[user].email === username) {
-      ID = user;
-      return ID;
-    }
-  }
-  return ID;
-}
-
-//checks the email being used in the register page and compares it to the other emails in the database
-function emailChecker(email) {
-  console.log("I am in the function" )
-  for (user in users) {
-    if (users[user].email === email) {
-      return true;
-    }
-  }
-}
