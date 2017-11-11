@@ -6,6 +6,9 @@ Tiny app is a full stack web application built with Node and Express that allows
 
 ## Final Product
 
+!["Screenshot of Log In Page"](https://github.com/WhtMage/tinyURL/blob/master/docs/log-in-page.png?raw=true)
+!["Screenshot of Register Page"](https://github.com/WhtMage/tinyURL/blob/master/docs/regsiter-page.png?raw=true)
+!["Screenshot of URL Library"](https://github.com/WhtMage/tinyURL/blob/master/docs/urls-library.png?raw=true)
 
 
 ## Dependancies
