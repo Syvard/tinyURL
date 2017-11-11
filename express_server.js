@@ -1,3 +1,4 @@
+//middleware and dependancies
 var express = require("express");
 var app = express();
 var PORT = process.env.PORT || 8080; // default port 8080
@@ -38,6 +39,7 @@ const users = {
   }
 }
 
+//generates a random string out of 6 alphanumeric characters
 function generateRandomString() {
   var text = "";
   var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -47,7 +49,7 @@ function generateRandomString() {
   return text;
 }
 
-//
+//compares the e-mail in the argument to the email in the user database
 function IDChecker(candidate_email) {
   for (let user_id in users) {
     const user = users[user_id];
@@ -60,7 +62,6 @@ function IDChecker(candidate_email) {
 
 //checks the email being used in the register page and compares it to the other emails in the database
 function emailChecker(email) {
-  console.log("I am in the function" )
   for (user in users) {
     if (users[user].email === email) {
       return true;
@@ -68,6 +69,7 @@ function emailChecker(email) {
   }
 }
 
+//finds the urls that are associated with the user based on their id
 function urlsForUser(userId) {
   const output = {}
   for(const url in urlDatabase) {
@@ -85,30 +87,33 @@ function urlsForUser(userId) {
 
 /* GETS */
 
+//testing page to check function of server
 app.get("/", (req, res) => {
   res.end("Hello!");
 });
-//Places 'Hello!' into the web page, visible on the home page or '/' directory.
+
+//testing page
 app.get("/shorten", (req, res) => {
   res.end("Placeholder for shortening a URL!");
 });
 
+//When they request goes to the server for a directory named '/urls.json' the sit will display our urlDatabase on the site.
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
-//When they request goes to the server for a directory named '/urls.json' the sit will display our urlDatabase on the site.
+
 app.get("/hello", (req, res) => {
   res.end("<html><body>Hello <b>World</b></body></html>\n");
 });
 
-//When they requested directory '/hello' the site will redirect to that directory which has 'Hello World' written as the body. 'World' will be in bold.
+//will display that the server is running and one what port
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
+//displays the URLs that are in the database according to the user, should not show any other urls but the one that are related to the user
 app.get("/urls", (req, res) => {
   var userID = req.session.user_id;
-  //var userID = req.cookies.user_id;
   var user = users[userID];
   let templateVars = {
     urls: urlsForUser(userID),
@@ -117,8 +122,8 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+//landing page to add a new long URL into database which will in turn generate a random string through the generateRandomString function
 app.get("/urls/new", (req, res) => {
-  //var userID = req.cookies.user_id;
   var userID = req.session.user_id;
   var user = users[userID];
   let templateVars = {
@@ -128,9 +133,9 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
+//register page, should contain two parameters to fill in (if not filled in should not allow further use - see post)
 app.get("/register", (req, res) =>{
   var userID = req.session.user_id;
-  //var userID = req.cookies.user_id;
   var user = users[userID];
   let templateVars = {
     urls: urlDatabase,
@@ -139,6 +144,7 @@ app.get("/register", (req, res) =>{
   res.render("urls_reg", templateVars);
 });
 
+//entering the generated short URL should redirect you to the location of the long URL
 app.get("/u/:shortURL", (req, res) => {
     if (!(req.params.shortURL in urlDatabase)){
     res.send(404);
@@ -147,12 +153,11 @@ app.get("/u/:shortURL", (req, res) => {
   var short = req.params.shortURL ;
   let longURL = urlDatabase[short].longURL;
   res.redirect(longURL);
-
 });
 
+//displays the url you are trying to edit, and provies an input area to edit the url - reassigns the long URL to the short URL
 app.get("/urls/:id", (req, res) => {
   var userID = req.session.user_id;
-  //var userID = req.cookies.user_id;
   if(userID !== urlDatabase[req.params.id].userID){
     res.send(403);
     return;
@@ -165,9 +170,8 @@ app.get("/urls/:id", (req, res) => {
     longURL: urlDatabase[req.params.id].longURL,};
   res.render("urls_show", templateVars);
 });
-
+// login page, should contain two parameters for email and password
 app.get("/login", (req, res) => {
-  // var userID = req.cookies.user_id;
   var userID = req.session.user_id;
   var user = users[userID];
   let templateVars = {
@@ -178,7 +182,7 @@ app.get("/login", (req, res) => {
 
 /* POSTS */
 
-//Moves the url info from urlDatabase to our 'urls_show' file, giving it the value listed in the 'let templateVars' (shortURL);
+//deletes url from the database and redirects to database once completed;
 app.post("/urls/:id/delete", (req, res) => {
   if (req.session.user_id !== users[req.session.user_id] ){
   delete urlDatabase[req.params.id];
@@ -187,23 +191,21 @@ app.post("/urls/:id/delete", (req, res) => {
     res.send(403);
   }
 });
-//Deletes url from the database and redirects to database once completed;
+
+//renames the url that is listed to what the user inputs into the body of the edit bar
 app.post("/urls/:id", (req, res) => {
    if (req.session.user_id !== users[req.params.id] ){
     var value = req.body.longURL;
     urlDatabase[req.params.id].longURL = value
     res.redirect("/urls");
-    console.log(users[req.params.id])
   } else {
     res.send(403);
   }
 });
-//renames the longURL to what was placed in the
 
+//login page , checks for any empty strings on the login page (either username/password) and if either have no value returns 403.
+//If password does not match the password in the database, sends a 403
 app.post("/login", (req, res) => {
-
-
-
   var userEmail = req.body.email;
   var userPass = req.body.password;
   var userId = IDChecker(userEmail);
@@ -217,17 +219,17 @@ app.post("/login", (req, res) => {
   }
   //create the session cookie
   req.session.user_id = userId;
-  // res.cookie( "user_id", userId);
   res.redirect("/urls");
 });
 
+//clears all cookies and logs the user out once they press the button
 app.post("/logout", (req, res) =>{
   req.session = null;
   res.redirect("/urls");
 });
 
+//posts the information to the url databse, and ties the short url handle to the user that input the information
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // debug statement to see POST parameters
   var key = generateRandomString();
   var value = req.body.longURL;
   urlDatabase[key] = {
@@ -235,15 +237,15 @@ app.post("/urls", (req, res) => {
     shortURL: key,
     userID: req.session.user_id,
   };
-  res.redirect('/urls');         // Respond with 'Ok' (we will replace this)
+  res.redirect('/urls');
 });
-//Moves the url information from urlDatabase to our 'urls_index' file , giving it the value listed in 'let templateVars' (urls);
 
+//check the requires for registration, if either parameter is not completed, returns a 400. Else it will encrypt the password and register
+//information to database
 app.post("/register", (req, res) => {
   let userId = generateRandomString();
   let myEmail = req.body.email;
   let myPassword = req.body.password;
-
   if (!myEmail || !myPassword) {
     res.status(400).send("400 - Registration not completed");
   } else if (emailChecker(myEmail)) {
@@ -256,9 +258,7 @@ app.post("/register", (req, res) => {
       password: hashedPassword
     };
 req.session.user_id = userId;
-  //  res.cookie('user_id', userId)
     users[userId] = user;
-    console.log(users); // see POST parameters - check if users database is being updated properly;
     res.redirect('/urls')
   };
 });
